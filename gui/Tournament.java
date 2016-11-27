@@ -4,7 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 
-import roundRobin.Format;
+import matchmaking.Format;
+
 
 public class Tournament implements Serializable {
 	private Format type;

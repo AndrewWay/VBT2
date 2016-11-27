@@ -12,7 +12,7 @@ public class Tournament implements Serializable {
 	private String deadline;
 	private ArrayList<Team> teams;
 
-	public Tournament(String name, Format type, String location, String deadline) {
+	public Tournament(String name,Format type, String location, String deadline) {
 		this.name = name;
 		this.type = type; 
 		this.location = location;

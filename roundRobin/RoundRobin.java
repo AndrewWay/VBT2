@@ -16,76 +16,48 @@ import java.util.concurrent.ThreadLocalRandom;
  * Step 7: Continue matchplay by pairing teams up into new matches 
  * 
 */
-public class RoundRobin {
-	//This is all temporarily static. 
-	static int[][] matchTracker;
-	static LinkedList<Match> currentMatches = new LinkedList<Match>();
-	static LinkedList<Match> oldMatches = new LinkedList<Match>();
-	static LinkedList<Match> matches = new LinkedList<Match>();
-	static int teamQuantity;
-	static LinkedList<Integer> idleTeams = new LinkedList<Integer>();
-	static int[] matchFreq;
-	public static void main(String[]args){
-		teamQuantity = 10;
-		matchTracker = new int[teamQuantity][teamQuantity];
-		matchFreq=new int[teamQuantity];
-		for(int i = 0;i<teamQuantity;i++){
-			idleTeams.add(i);
-		}
-		for(int i=0;i<teamQuantity;i++){
+public class RoundRobin extends Format{
+	private int[][] matchTracker;
+	private int[] matchFreq;
+	
+	
+	public RoundRobin(int tq, int cq){
+		createNM();
+		createCM();
+		createOM();
+		setTeamQuantity(tq);
+		createIdleTeamsList();
+		createMatchTracker();
+		setNumofCourts(cq);
+		matchFreq = new int[tq];
+	}
+	
+	public void createMatchTracker(){
+		int tq = getTeamQuantity();
+		matchTracker = new int[tq][tq];
+		for(int i=0;i<tq;i++){
 			Arrays.fill(matchTracker[i], -1);
 			matchTracker[i][i]=-2;
 		}
-		Arrays.fill(matchFreq,0);
-		//printMatchTracker();
-		boolean verdict = false;
-		
-		while(verdict==false){
-			checkMatchup();
-			playMatch();
-			checkMatchup();
-			endMatch(0);
-			boolean check = true;
-			for(int i=0;i<teamQuantity;i++){
-				for(int j=0;j<teamQuantity;j++){
-					if(matchTracker[i][j] == -1 || matchTracker[i][j] == -3 || matchTracker[i][j] == -4){
-						check=false;
-					}
-				}
-			}
-		System.out.println(Arrays.toString(matchFreq));
-		printIdleTeamList();
-		printList(matches);
-		printMatchTracker();
-		if(check==true){
-			verdict=true;
-		}
-		}
-		System.out.println(Arrays.toString(matchFreq));
-		printIdleTeamList();
-		printMatchTracker();
-		printList(matches);
 	}
-	
-	
-	public static void checkMatchup(){
-		if(idleTeams.size()>1){
-		for(int i=0;i<idleTeams.size();i++){
-			for(int j=i+1;j<idleTeams.size();j++){;
-				int t1ID=idleTeams.remove(j);
-				int t2ID=idleTeams.remove(i);
+	public void checkMatchup(){
+		LinkedList<Integer> idleTeamList = getIdleTeams();
+		if(idleTeamList.size()>1){
+		for(int i=0;i<idleTeamList.size();i++){
+			for(int j=i+1;j<idleTeamList.size();j++){
+				int t1ID=idleTeamList.remove(j);
+				int t2ID=idleTeamList.remove(i);
 				if(matchTracker[t1ID][t2ID] == -1 && matchTracker[t2ID][t1ID] == -1){
-					printMatchTracker();
 					matchTracker[t1ID][t2ID]=-3;
 					matchTracker[t2ID][t1ID]=-3;
-					matchup(t1ID,t2ID);
-					if(j==idleTeams.size()-1){
+					createMatch(t1ID,t2ID);
+					if(j==idleTeamList.size()-1){
 						i=i-1;
 					}
 				}
 				else{
-					idleTeams.offerFirst(t1ID);
-					idleTeams.offerFirst(t2ID);
+					idleTeamList.offerFirst(t1ID);
+					idleTeamList.offerFirst(t2ID);
 				}
 			}
 		}
@@ -94,31 +66,29 @@ public class RoundRobin {
 			System.out.println("No teams left to matchup");
 		}
 	}
-	public static void matchup(int t1ID,int t2ID){
-			//System.out.println("(MATCH QUEUED)");
-			Match m = new Match(t1ID,t2ID);
-			matches.add(m);	
+	public void createMatch(int T1ID, int T2ID) {
+		Match m = new Match(T1ID,T2ID);
+		getNM().add(m);	
 	}
-	public static void playMatch(){
-		if(matches.size()>0){
-			//System.out.println("++MATCH STARTED++");
-			Match m = matches.get(0);
+	public void playMatch(){
+		
+		if(getNM().size()>0 && occupyCourt()){
+			Match m = getNM().get(0);
 			int t1ID = m.getTeam1();
 			int t2ID = m.getTeam2();
 			matchTracker[t1ID][t2ID]=-4;
-			currentMatches.add(matches.remove());
+			getCM().add(getNM().remove());
 		}
-		else{
+		else if(!(getNM().size()>0)){
 			System.out.println("No new matches to play");
 		}
 	}
-	public static void endMatch(int matchID){
+	public void endMatch(int matchID){
 		//Ask for the scores here? Or have it added elsewhere and have it stored in object for 
 		//future use?
-		if(currentMatches.size()>0){
-			//System.out.println("--MATCH ENDED--");
-			Match finishedMat = currentMatches.remove(matchID);
-			oldMatches.add(finishedMat);
+		if(getCM().size()>0 && unoccupyCourt()){
+			Match finishedMat = getCM().remove(matchID);
+			getOM().add(finishedMat);
 			int t1ID = finishedMat.getTeam1();
 			int t2ID = finishedMat.getTeam2();
 			matchFreq[t1ID]=matchFreq[t1ID]+1;
@@ -135,14 +105,14 @@ public class RoundRobin {
 //				System.out.printf("MATCH: %d %d SCORE: %d %d\n",t1ID,t2ID,score1,score2);
 //				//printMatchTracker();
 //			}
-//			double halfwayPt = Math.floor((idleTeams.size()-1)/2);//Use this for inserting idle teams
+//			double halfwayPt = Math.floor((idleTeamList.size()-1)/2);//Use this for inserting idle teams
 			boolean t1completion=checkMatchCompletion(t1ID);
 			boolean t2completion=checkMatchCompletion(t2ID);
 			if(t1completion == false){
-				idleTeams.offerFirst(t1ID);
+				getIdleTeams().offerFirst(t1ID);
 			}
 			if(t2completion == false){
-				idleTeams.offerLast(t2ID);
+				getIdleTeams().offerLast(t2ID);
 			}
 			
 		}
@@ -150,81 +120,79 @@ public class RoundRobin {
 			System.out.println("Match does not exist");
 		}
 	}
-	public static boolean checkMatchCompletion(int tID){
+	public boolean checkMatchCompletion(int tID){
 		boolean finished = true; 
-		for(int i=0;i<teamQuantity;i++){
+		for(int i=0;i<getTeamQuantity();i++){
 			if(matchTracker[tID][i] == -1){
 				finished = false;
 			}
 		}
 		return finished;	
 	}
-	public static void printIdleTeamList(){
-		System.out.println("IDLE TEAM LIST-------");
-		for(int i=0;i<idleTeams.size();i++){
-			System.out.print(idleTeams.get(i)+" ");
-		}
-		System.out.println("");
-	}
-	public static void printMatchTracker(){
-		for(int j=0;j<teamQuantity;j++){
-			for(int i=0;i<teamQuantity;i++){
+
+	public void printMatchTracker(){
+		for(int j=0;j<getTeamQuantity();j++){
+			for(int i=0;i<getTeamQuantity();i++){
 				System.out.format("%4d",matchTracker[i][j]);
 			}
-			System.out.println();
+			System.out.println("\n");
 		}
 	}
-	public static void printList(LinkedList<Match> mat){
-		if(mat.size()==0){
-			System.out.println("NO MATCHES");
-		}
-		else{
-			for(int i=0;i<mat.size();i++){
-				Match m = mat.get(i);
-				int t1 = m.getTeam1();
-				int t2 = m.getTeam2();
-				System.out.println("Match "+i+": "+t1+" "+t2);
-			}
-		}
-		System.out.println();
+	public void printNM(){
+		System.out.println("New matches");
+		printList(getNM());
 	}
-	public static void testMatchPlay(){
-		System.out.println("Old Matches");
-		printList(oldMatches);
-		
-		System.out.println("New Matches");
-		printList(matches);
-		
-		System.out.println("Current Matches");
-		printList(currentMatches);
-		
-		System.out.println("----------------");
-		
-		playMatch();
-		
-		System.out.println("Old Matches");
-		printList(oldMatches);
-		
-		System.out.println("New Matches");
-		printList(matches);
-		
-		System.out.println("Current Matches");
-		printList(currentMatches);
-		
-		
-		endMatch(0);
-		
-		System.out.println("----------------");
-		
-		playMatch();
-		
-		System.out.println("Old Matches");
-		printList(oldMatches);
-		
-		System.out.println("New Matches");
-		printList(matches);
-		
-		System.out.println("Current Matches");
-		printList(currentMatches);
+	public void printCM(){
+		System.out.println("Current matches");
+		printList(getCM());
 	}
+	public void printOM(){
+		System.out.println("Old matches");
+		printList(getOM());
+	}
+
+
+//	public static void main(String[]args){
+//	teamQuantity = 50;
+//	matchTracker = new int[teamQuantity][teamQuantity];
+//	matchFreq=new int[teamQuantity];
+//	for(int i = 0;i<teamQuantity;i++){
+//		idleTeamList.add(i);
+//	}
+//	for(int i=0;i<teamQuantity;i++){
+//		Arrays.fill(matchTracker[i], -1);
+//		matchTracker[i][i]=-2;
+//	}
+//	Arrays.fill(matchFreq,0);
+//	//printMatchTracker();
+//	boolean verdict = false;
+//	
+//	while(verdict==false){
+//		checkMatchup();
+//		playMatch();
+//		checkMatchup();
+//		endMatch(0);
+//		boolean check = true;
+//		for(int i=0;i<teamQuantity;i++){
+//			for(int j=0;j<teamQuantity;j++){
+//				if(matchTracker[i][j] == -1 || matchTracker[i][j] == -3 || matchTracker[i][j] == -4){
+//					check=false;
+//				}
+//			}
+//		}
+//	System.out.println(Arrays.toString(matchFreq));
+//	printIdleTeamList();
+//	printList(newMatches);
+//	printMatchTracker();
+//	if(check==true){
+//		verdict=true;
+//	}
+//	}
+//	System.out.println(Arrays.toString(matchFreq));
+//	printIdleTeamList();
+//	printMatchTracker();
+//	printList(newMatches);
+//}
+
+
 }

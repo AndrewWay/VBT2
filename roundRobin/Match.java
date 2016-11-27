@@ -1,12 +1,16 @@
 package roundRobin;
 
 public class Match {
-	int team1,team2,score1,score2;
-	public Match(int t1,int t2){
+	int team1,team2,score1,score2,id;
+	public Match(int t1,int t2,int id){
 		team1=t1;
 		team2=t2;
 		score1=1;
 		score2=2;//DEFAULT SCORES
+		this.id=id;
+	}
+	public int getID(){
+		return id;
 	}
 	public int getTeam1(){
 		return team1;

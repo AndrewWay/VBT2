@@ -17,9 +17,6 @@ public class tester {
 		//Tournament needs to pass integer to RoundRobin. 
 		Tournament tourney = new Tournament(tournaName,form,location,date);
 		
-		form.printIdleTeamList();
-		form.checkMatchup();
-		form.printMatchTracker();
 		//USER INPUT BEGINS HERE
 		Scanner in = new Scanner(System.in);
 		boolean breakLoop = false;
@@ -31,15 +28,28 @@ public class tester {
 			
 			String input = in.next();
 			if(input.equals("1")){
-				form.checkMatchup();
+				form.checkMatchup();//Check if any teams can be matched up
 			}
 			if(input.equals("2")){
 				form.playMatch();
 			}
 			if(input.equals("3")){
-				form.endMatch(0);
+				if(form.getCM().size()>0){
+				System.out.println("Please enter match ID of match you'd like to end: ");
+				int mid = in.nextInt();
+				form.endMatch(mid);
+				}
+				else{
+					System.out.println("No matches currently being played");
+				}
 			}
 			if(input.equals("4")){
+				form.printMatchTracker();
+			}
+			if(input.equals("5")){
+				form.printIdleTeamList();
+			}
+			if(input.equals("10")){
 				System.out.println("Exiting");
 				breakLoop = true;
 			}

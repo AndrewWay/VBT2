@@ -6,11 +6,12 @@ import java.util.LinkedList;
 public abstract class Format {
 	private LinkedList<Integer> idleTeams;
 	private LinkedList<Match> newMatches;
-	private LinkedList<Match> currentMatches;
+	private Map<Integer,Match> currentMatches;
 	private LinkedList<Match> oldMatches;
 	private int teamQuantity;
 	private int num_of_courts;
 	private int occ_courts;
+	private int num_of_matches;
 	private String desc;
 	
 	public abstract void checkMatchup();
@@ -21,7 +22,7 @@ public abstract class Format {
 	public LinkedList<Match> getNM(){
 		return newMatches;
 	}
-	public LinkedList<Match> getCM(){
+	public Map<Integer,Match> getCM(){
 		return currentMatches;
 	}
 	public LinkedList<Match> getOM(){
@@ -37,7 +38,7 @@ public abstract class Format {
 		this.newMatches=new LinkedList<Match>();
 	}
 	public void createCM(){
-		this.currentMatches=new LinkedList<Match>();
+		this.currentMatches=new HashMap<Integer,Match>();
 	}
 	public void createOM(){
 		this.oldMatches=new LinkedList<Match>();
@@ -57,29 +58,47 @@ public abstract class Format {
 	public int getNumOfCourts(){
 		return num_of_courts;
 	}
-	public boolean unoccupyCourt(){
-		boolean occupiedCourt;
-		if(occ_courts>0){
+	public void unoccupyCourt(){
+		if(!(allCourtsEmpty())){
 			occ_courts--;
-			occupiedCourt = true;
 		}
 		else{
 			System.out.println("All courts are already empty");
-			occupiedCourt = false;
 		}
-		return occupiedCourt;
 	}
-	public boolean occupyCourt(){
-		boolean vacantCourt;
+	public void incrementMatchCounter(){
+		num_of_matches++;
+	}
+	public int getMatchCount(){
+		return num_of_matches;
+	}
+	public boolean allCourtsOccupied(){
+		boolean verdict;
 		if(occ_courts<num_of_courts){
+			verdict = false;
+		}
+		else{
+			verdict = true;
+		}
+		return verdict;
+	}
+	public boolean allCourtsEmpty(){
+		boolean verdict;
+		if(occ_courts>0){
+			verdict = false;
+		}
+		else{
+			verdict = true;
+		}
+		return verdict;
+	}
+	public void occupyCourt(){
+		if(!(allCourtsOccupied())){
 			occ_courts++;
-			vacantCourt = true;
 		}
 		else{
 			System.out.println("No free courts: match initiation prevented");
-			vacantCourt = false;
 		}
-		return vacantCourt;
 	}
 	public void printList(LinkedList<Match> mat){
 		if(mat.size()==0){
@@ -90,7 +109,8 @@ public abstract class Format {
 				Match m = mat.get(i);
 				int t1 = m.getTeam1();
 				int t2 = m.getTeam2();
-				System.out.println("Match "+i+": "+t1+" "+t2);
+				int id = m.getID();
+				System.out.println("Match "+id+": "+t1+" "+t2);
 			}
 		}
 		System.out.println();
